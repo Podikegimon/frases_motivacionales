@@ -14,9 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // ------------- Estado de la Aplicación -------------
-    // **CAMBIO:** Variable para almacenar el usuario "logueado".
-    // Para este demo, usaremos un objeto estático con un UUID válido.
-    // En una app real, esto vendría de `sb.auth.getUser()`.
     let currentUser = null;
 
     // ------------- Lógica de la Aplicación -------------
@@ -34,13 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = document.getElementById('password').value.trim();
 
         if (email === 'admin@gmail.com' && password === '1234') {
-            // **CAMBIO:** Se asigna un usuario mock al iniciar sesión.
-            // Este UUID es un ejemplo, pero debe ser consistente.
             currentUser = {
                 id: '8d5c9f5c-9c9d-4e2b-8b8e-1b1b1b1b1b1b',
                 email: 'admin@gmail.com'
             };
-
             loginContainer.classList.add('hidden');
             mainApp.classList.remove('hidden');
             initializeApp();
@@ -67,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleNavigation() {
         const hash = (location.hash || '#inicio').substring(1);
-        const validSections = ['inicio', 'frases', 'categorias', 'usuarios', 'likes', 'nosotros', 'contacto'];
+        const validSections = ['inicio', 'frases', 'categorias', 'usuarios', 'nosotros'];
         activateSection(validSections.includes(hash) ? hash : 'inicio');
     }
 
@@ -90,21 +84,18 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const frasesContainer = document.getElementById('frases-container');
     const fraseForm = document.getElementById('frase-form');
-    // ... (resto de tus variables de formulario)
-
-    const dataTables = { frases: null, categorias: null, usuarios: null, likes: null };
+    
+    const dataTables = { frases: null, categorias: null, usuarios: null };
     
     async function initSupabase() {
         await getFrases();
         await getCategories();
         await renderUsuariosTable();
-        await getLikes();
         setupActionListeners();
         setupRealtime();
     }
     
     function setupRealtime() {
-      // Escuchamos cambios en 'frases' para actualizar likes en tiempo real
       sb.channel('public:frases')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'frases' }, getFrases)
         .subscribe();
@@ -131,51 +122,38 @@ document.addEventListener('DOMContentLoaded', () => {
     async function renderFraseCards() {
         if (!frasesContainer || !currentUser) return;
 
-        // **CAMBIO:** Modificamos la consulta para traer la información de los likes
-        // de cada frase y saber si el usuario actual ya le dio "like".
         let { data: frases, error } = await sb.from('frases')
             .select(`
-                id, texto, autor, fecha_creacion, total_likes,
-                categorias ( id, nombre ),
-                likes ( usuario_id )
+                id, texto, autor, fecha_creacion,
+                categorias ( id, nombre )
             `)
             .order('fecha_creacion', { ascending: false });
 
         if (error) { console.error('Error fetching frases:', error); return; }
 
-        frasesContainer.innerHTML = frases.map(frase => {
-            // Verificamos si en la lista de likes de esta frase está nuestro usuario.
-            const userHasLiked = frase.likes.some(like => like.usuario_id === currentUser.id);
-            
-            return `
+        frasesContainer.innerHTML = frases.map(frase => `
             <div class="frase-card">
               <p class="frase-text">"${frase.texto}"</p>
               <div class="frase-meta">
                 <span class="badge">${frase.categorias?.nombre || 'General'}</span>
-                
-                <button 
-                  class="like-btn ${userHasLiked ? 'liked' : ''}" 
-                  data-id="${frase.id}" 
-                  data-liked="${userHasLiked}">
-                  ❤️ <span class="like-count">${frase.total_likes || 0}</span>
-                </button>
               </div>
               <div class="frase-submeta muted">#${frase.id} · ${new Date(frase.fecha_creacion).toLocaleDateString()}</div>
             </div>
-        `}).join('');
+        `).join('');
     }
 
-    // ... (Tu función renderFrasesTable y las demás se mantienen igual)
     async function renderFrasesTable() {
         const frasesTableBody = document.querySelector('#frases-table tbody');
         if (!frasesTableBody) return;
-        let { data: frases, error } = await sb.from('frases').select(`id, texto, autor, total_likes, fecha_creacion, categorias(id, nombre)`).order('id', { ascending: true });
+        let { data: frases, error } = await sb.from('frases').select(`id, texto, autor, fecha_creacion, categorias(id, nombre)`).order('id', { ascending: true });
         if (error) { console.error('Error fetching frases table:', error); return; }
 
         frasesTableBody.innerHTML = frases.map(f => `
             <tr>
-                <td>${f.id}</td><td>${f.texto}</td><td>${f.autor || ''}</td>
-                <td>${f.categorias?.nombre || ''}</td><td>${f.total_likes}</td>
+                <td>${f.id}</td>
+                <td>${f.texto}</td>
+                <td>${f.autor || ''}</td>
+                <td>${f.categorias?.nombre || ''}</td>
                 <td>${new Date(f.fecha_creacion).toLocaleString()}</td>
                 <td>
                     <div class="action-buttons">
@@ -196,7 +174,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if(categoryTableBody) {
           categoryTableBody.innerHTML = categories.map(c => `
               <tr>
-                  <td>${c.id}</td><td>${c.nombre}</td><td>${c.descripcion || ''}</td>
+                  <td>${c.id}</td>
+                  <td>${c.nombre}</td>
+                  <td>${c.descripcion || ''}</td>
                   <td>
                       <div class="action-buttons">
                           <button class="action-btn edit edit-category" data-id="${c.id}" data-nombre="${c.nombre}">✏️</button>
@@ -214,21 +194,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!usersTableBody) return;
         usersTableBody.innerHTML = '';
         initializeDataTable('users-table', 'usuarios');
-    }
-    
-    async function getLikes() {
-        const likesTableBody = document.querySelector('#likes-table tbody');
-        if (!likesTableBody) return;
-        const { data: likes, error } = await sb.from('likes').select(`id, fecha_like, frases(texto), usuarios(nombre_usuario)`).order('fecha_like', { ascending: false });
-        if (error) { console.error('Error fetching likes:', error); return; }
-        
-        likesTableBody.innerHTML = likes.map(l => `
-            <tr>
-                <td>${l.id}</td><td>${l.frases?.texto?.substring(0, 40) + '...' || 'N/A'}</td>
-                <td>${l.usuarios?.nombre_usuario || 'N/A'}</td><td>${new Date(l.fecha_like).toLocaleString()}</td>
-            </tr>
-        `).join('');
-        initializeDataTable('likes-table', 'likes');
     }
 
     fraseForm.addEventListener('submit', async (e) => {
@@ -253,43 +218,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (error) console.error('Error saving category:', error); else document.getElementById('category-form').reset();
     });
 
-    // **CAMBIO:** Se añade la lógica para manejar el clic en el botón de "like".
-    async function handleLikeClick(e) {
-        const likeButton = e.target.closest('.like-btn');
-        if (!likeButton || !currentUser) return;
-
-        const fraseId = likeButton.dataset.id;
-        const userHasLiked = likeButton.dataset.liked === 'true';
-
-        // Lógica para quitar el like
-        if (userHasLiked) {
-            const { error } = await sb.from('likes')
-                .delete()
-                .match({ usuario_id: currentUser.id, frase_id: fraseId });
-            
-            if (error) console.error('Error removing like:', error);
-
-        // Lógica para agregar el like
-        } else {
-            const { error } = await sb.from('likes')
-                .insert({ usuario_id: currentUser.id, frase_id: fraseId });
-
-            if (error) console.error('Error adding like:', error);
-        }
-        
-        // No es necesario refrescar manualmente, la suscripción de Realtime
-        // detectará el cambio en la tabla `frases` (vía trigger) y
-        // llamará a `renderFraseCards` automáticamente.
-    }
-
     function setupActionListeners() {
-      // **CAMBIO:** Se adjunta el nuevo manejador de likes al contenedor.
-      frasesContainer.addEventListener('click', handleLikeClick);
-        
       document.body.addEventListener('click', async (e) => {
         const target = e.target.closest('.action-btn');
         if (!target) return;
-        
         const id = target.dataset.id;
         
         if (target.classList.contains('edit-frase')) {
