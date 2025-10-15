@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frases que Inspiran</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/2.3.4/css/dataTables.dataTables.min.css" />
+</head>
+<body>
+
+  <div id="splash-screen">
+    <div class="splash-content">
+      <div class="splash-logo">✨</div>
+      <h1 class="splash-title">Frases que Inspiran</h1>
+    </div>
+  </div>
+
+  <div id="login-container" class="hidden">
+    <div class="login-box">
+      <div class="header-login">
+        <div class="logo">🔒</div>
+        <h1>Bienvenido</h1>
+        <p>Inicia sesión para continuar</p>
+      </div>
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="email">Correo Electrónico</label>
+          <input type="email" id="email" placeholder="Ingresa tu correo" required value="admin@gmail.com">
+        </div>
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input type="password" id="password" placeholder="Ingresa tu contraseña" required value="1234">
+        </div>
+        <button type="submit" class="btn-login">Iniciar Sesión</button>
+        <div class="message" id="login-message"></div>
+      </form>
+    </div>
+  </div>
+
+  <div id="main-app" class="hidden">
+    <header class="header">
+      <div class="container nav">
+        <div class="brand">Frases Positivas</div>
+        <nav>
+          <a href="#inicio" class="nav-link active" data-section="inicio">Inicio</a>
+          <a href="#frases" class="nav-link" data-section="frases">Frases</a>
+          <a href="#categorias" class="nav-link" data-section="categorias">Categorías</a>
+          <a href="#usuarios" class="nav-link" data-section="usuarios">Usuarios</a>
+          <a href="#likes" class="nav-link" data-section="likes">Likes</a>
+          <a href="#nosotros" class="nav-link" data-section="nosotros">Nosotros</a>
+          <a href="#" id="logout-link" class="nav-link">Logout</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <section id="inicio" class="section active">
+        <div class="hero">
+          <h1>Comparte y descubre frases que inspiran</h1>
+          <p>Dale like ❤️ a las que más te motiven y ayúdanos a construir una comunidad positiva.</p>
+        </div>
+        <div id="frases-container"></div>
+      </section>
+
+      <section id="frases" class="section">
+        <h2>Administrar Frases</h2>
+        <div class="admin-layout">
+          <div class="admin-content">
+            <div class="panel">
+              <form id="frase-form">
+                <input type="hidden" id="frase-id" />
+                <label for="frase-text" class="muted">Texto de la frase</label>
+                <textarea id="frase-text" placeholder="Escribe tu frase aquí"></textarea>
+                <label for="frase-author" class="muted">Autor (opcional)</label>
+                <input type="text" id="frase-author" placeholder="Autor de la frase" />
+                <label for="frase-category" class="muted">Categoría</label>
+                <select id="frase-category"></select>
+                <button type="submit">Guardar Frase</button>
+              </form>
+            </div>
+            <div class="panel">
+              <table id="frases-table" class="display" style="width:100%">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Frase</th>
+                    <th>Autor</th>
+                    <th>Categoría</th>
+                    <th>Likes</th>
+                    <th>Fecha Creación</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <section id="categorias" class="section">
+        <h2>Administrar Categorías</h2>
+        <div class="admin-layout">
+          <div class="admin-content">
+            <div class="panel">
+              <form id="category-form">
+                <input type="hidden" id="category-id" />
+                <label for="category-name" class="muted">Nombre</label>
+                <input type="text" id="category-name" placeholder="Nombre de la categoría" />
+                <button type="submit">Guardar Categoría</button>
+              </form>
+            </div>
+            <div class="panel">
+              <table id="category-table" class="display" style="width:100%">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Categoría</th>
+                    <th>Descripción</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="usuarios" class="section">
+        <h2>Administrar Usuarios</h2>
+        <div class="panel">
+          <table id="users-table" class="display" style="width:100%">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre Usuario</th>
+                <th>Email</th>
+                <th>Fecha Registro</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+      
+      <section id="likes" class="section">
+        <h2>Registro de Likes</h2>
+        <div class="panel">
+          <p class="muted">Esta tabla muestra un registro de todos los 'likes' dados en el sistema.</p>
+          <table id="likes-table" class="display" style="width:100%">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Frase</th>
+                <th>Usuario</th>
+                <th>Fecha del Like</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="nosotros" class="section">
+          <h2>Sobre Nosotros</h2>
+          <div class="panel about-us-content">
+              <div>
+                  <h3>Nuestra Misión</h3>
+                  <p>Recopilar, compartir y crear las frases más poderosas del mundo para que nunca falte una razón para sonreír, levantarse y seguir adelante.</p>
+                  <h3>Nuestra Visión</h3>
+                  <p>Ser la mayor comunidad hispana de personas que se motivan unas a otras a través de palabras simples pero transformadoras.</p>
+                  <blockquote>
+                      “No hay viento favorable para el barco que no sabe a dónde va.”
+                      <cite>— Séneca</cite>
+                  </blockquote>
+              </div>
+              <div>
+                  <img src="https://source.unsplash.com/600x400/?motivation,sky" alt="Motivación">
+              </div>
+          </div>
+      </section>
+
+    
+
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <p>&copy; <span id="year"></span> Frases Positivas. Todos los derechos reservados.</p>
+        <p>Un espacio para compartir inspiración.</p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/2.3.4/js/dataTables.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
